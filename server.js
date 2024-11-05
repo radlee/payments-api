@@ -25,8 +25,8 @@ const swaggerOptions = {
             },
         },
         servers: [
-            { url: "http://localhost:3000" }, // Localhost URL
-            { url: process.env.API_URL } // Deployed URL from environment variable
+            { url: "https://payments-api-beta.vercel.app" },  // Production URL
+            { url: "http://localhost:3000" }                   // Localhost URL
         ],
         components: {
             securitySchemes: {
@@ -37,10 +37,15 @@ const swaggerOptions = {
                 },
             },
         },
-        security: [{ bearerAuth: [] }],
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
     },
     apis: ['./controllers/paymentController.js', './server.js'],
 };
+
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
