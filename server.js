@@ -96,6 +96,13 @@ app.get('/', (req, res) => {
       <html>
         <head>
           <title>Welcome to the Payment Service API</title>
+          <!-- Include Swagger UI CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui.css" />
+
+<!-- Include Swagger UI JS -->
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+
           <style>
             body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
             h1 { color: #4CAF50; }
