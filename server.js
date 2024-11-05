@@ -46,6 +46,8 @@ const swaggerOptions = {
     apis: ['./controllers/paymentController.js', './server.js'],
 };
 
+const CSS_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
@@ -86,6 +88,11 @@ app.use((err, req, res, next) => {
         message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
     });
 });
+app.use(
+    "/api-docs",
+    swaggerUI.serve,
+    swaggerUI.setup(specs, { customCssUrl: CSS_URL })
+  );
 
 // API Routes
 app.use('/api', apiRoutes);
