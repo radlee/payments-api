@@ -51,11 +51,15 @@ const CSS_URL =
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Serve swagger.json for the Swagger UI
-app.get('/api-docs/swagger.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerDocs);
-});
+route.use(
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+      customCss:
+        '.swagger-ui .opblock .opblock-summary-path-description-wrapper { align-items: center; display: flex; flex-wrap: wrap; gap: 0 10px; padding: 0 10px; width: 100%; }',
+      customCssUrl: CSS_URL,
+    }),
+  )
 
 // Swagger UI setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
