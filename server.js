@@ -91,7 +91,7 @@ app.use((err, req, res, next) => {
 // API Routes
 app.use('/api', apiRoutes);
 
-// Welcoming route
+// Welcoming route with extended documentation
 app.get('/', (req, res) => {
     res.send(`
       <html>
@@ -101,18 +101,75 @@ app.get('/', (req, res) => {
           <style>
             body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
             h1 { color: #4CAF50; }
+            h2 { color: #333; margin-top: 40px; }
             p { color: #555; }
+            pre, code { background-color: #f4f4f4; padding: 10px; border-radius: 5px; color: #333; display: block; text-align: left; }
+            .container { max-width: 800px; margin: auto; text-align: left; }
           </style>
         </head>
         <body>
-          <h1>Welcome to the Payment Service API</h1>
-          <p>This server provides API endpoints for account details and payments.</p>
-          <p>Use <code>/api/account/:accountNumber</code> to view account details and <code>/api/pay</code> to make a payment.</p>
-          <p>API documentation is available at <a href="/api-docs">/api-docs</a></p>
+          <div class="container">
+            <h1>Welcome to the Payment Service API</h1>
+            <p>This server provides API endpoints for authentication, account details, and payment processing.</p>
+            <p>API documentation is available at <a href="/api-docs">/api-docs</a></p>
+
+            <h2>Endpoints</h2>
+            <p>Below are the main endpoints in the correct usage order:</p>
+
+            <h3>1. Authentication</h3>
+            <p>Generate a JWT token for secure API access by providing a valid user ID.</p>
+            <pre><code>POST /auth</code></pre>
+            <p><strong>Request Body:</strong></p>
+            <pre><code>{
+    "userId": "user123"
+}</code></pre>
+            <p><strong>Response:</strong></p>
+            <pre><code>{
+    "token": "your_jwt_token_here"
+}</code></pre>
+
+            <h3>2. Get Account Details</h3>
+            <p>Retrieve account details by providing an account number. Use the generated JWT token in the Authorization header.</p>
+            <pre><code>GET /api/account/:accountNumber</code></pre>
+            <p><strong>Example Request:</strong></p>
+            <pre><code>GET /api/account/12345678</code></pre>
+            <p><strong>Example Response:</strong></p>
+            <pre><code>{
+    "accountNumber": "654321",
+    "balance": 10000,
+    "name": "Lee",
+    "surname": "Mafanga"
+}</code></pre>
+
+            <h3>3. Make a Payment</h3>
+            <p>Submit a payment request by sending the required payment details. Include the JWT token in the Authorization header.</p>
+            <pre><code>POST /api/pay</code></pre>
+            <p><strong>Request Body Example:</strong></p>
+            <pre><code>{
+    "amount": 500,
+    "accountNumber": "123456"
+}</code></pre>
+            <p><strong>Example Response:</strong></p>
+            <pre><code>{
+    "message": "Payment successful",
+    "accountNumber": "123456",
+    "newBalance": 4900,
+    "name": "Masizole",
+    "surname": "Skunana"
+}</code></pre>
+
+            <h2>How to Use the API</h2>
+            <p>To use this API, include the generated JWT token in the Authorization header for all secured endpoints.</p>
+            <pre><code>Authorization: Bearer your_jwt_token_here</code></pre>
+
+            <h2>Additional Resources</h2>
+            <p>For more details, visit the full API documentation at <a href="/api-docs">/api-docs</a>.</p>
+          </div>
         </body>
       </html>
     `);
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
