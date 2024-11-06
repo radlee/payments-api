@@ -6,6 +6,7 @@ const { isValidUser } = require('./models/users');
 const rateLimit = require('express-rate-limit');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 dotenv.config();
 const app = express();
@@ -46,23 +47,17 @@ const swaggerOptions = {
     apis: ['./controllers/paymentController.js', './server.js'],
 };
 
-const CSS_URL =
-  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
-
+const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-route.use(
-    '/docs',
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
-      customCss:
-        '.swagger-ui .opblock .opblock-summary-path-description-wrapper { align-items: center; display: flex; flex-wrap: wrap; gap: 0 10px; padding: 0 10px; width: 100%; }',
-      customCssUrl: CSS_URL,
-    }),
-  )
+// Serve static Swagger files
+const swaggerRoot = process.env.NODE_ENV === 'development' ? '/' : '/swagger';
+app.use(swaggerRoot, express.static(path.join(__dirname, 'swagger-static')));
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+    customCssUrl: CSS_URL,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -92,11 +87,6 @@ app.use((err, req, res, next) => {
         message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
     });
 });
-app.use(
-    "/api-docs",
-    swaggerUI.serve,
-    swaggerUI.setup(specs, { customCssUrl: CSS_URL })
-  );
 
 // API Routes
 app.use('/api', apiRoutes);
@@ -107,13 +97,7 @@ app.get('/', (req, res) => {
       <html>
         <head>
           <title>Welcome to the Payment Service API</title>
-          <!-- Include Swagger UI CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui.css" />
-
-<!-- Include Swagger UI JS -->
-<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
-
+          <link rel="stylesheet" type="text/css" href="${CSS_URL}" />
           <style>
             body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
             h1 { color: #4CAF50; }
