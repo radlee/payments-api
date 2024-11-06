@@ -47,8 +47,8 @@ const swaggerOptions = {
     apis: ['./controllers/paymentController.js', './server.js'],
 };
 
-const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
+const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 
 // Serve static Swagger files
 const swaggerRoot = process.env.NODE_ENV === 'development' ? '/' : '/swagger';
