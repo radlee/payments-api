@@ -1,7 +1,8 @@
 // models/accounts.js
 const accounts = [
     { accountNumber: '123456', balance: 5000, name: 'John', surname: 'Doe' },
-    { accountNumber: '654321', balance: 10000, name: 'Jane', surname: 'Smith' }
+    { accountNumber: '654321', balance: 10000, name: 'Jane', surname: 'Smith' },
+    { accountNumber: '987654', balance: 10000, name: 'Fatso 98', surname: 'Lenister' }
   ];
   
   const getAccountDetails = (accountNumber) => {
