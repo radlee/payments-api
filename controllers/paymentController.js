@@ -73,21 +73,26 @@ const validatePaymentFields = (accountNumber, amount, transactionReference, curr
  *       404:
  *         description: Account not found
  */
-const viewAccountDetails = (req, res) => {
-  const accountNumber = req.params.accountNumber;
-  const account = getAccountDetails(accountNumber);
+const viewAccountDetails = async (req, res) => {
+  try {
+    const accountNumber = req.params.accountNumber;
+    const account = await getAccountDetails(accountNumber); // Assuming this is an async function
 
-  if (!account) {
-    return respond(res, 404, 'Account not found', 'AC-002');
+    if (!account) {
+      return respond(res, 404, 'Account not found', 'AC-002');
+    }
+
+    respond(res, 200, 'Account details retrieved successfully', 'AC-001', {
+      accountNumber: account.accountNumber,
+      balance: account.balance,
+      name: account.name,
+      surname: account.surname,
+      currency: "ZAR"
+    }, { rateLimit });
+  } catch (error) {
+    console.error('Error retrieving account details:', error);
+    return respond(res, 500, 'Internal server error', 'AC-003');
   }
-
-  respond(res, 200, 'Account details retrieved successfully', 'AC-001', {
-    accountNumber: account.accountNumber,
-    balance: account.balance,
-    name: account.name,
-    surname: account.surname,
-    currency: "ZAR"
-  }, { rateLimit });
 };
 
 /**
@@ -147,50 +152,60 @@ const viewAccountDetails = (req, res) => {
  *       400:
  *         description: Payment failed or invalid transaction reference
  */
-const makePayment = (req, res) => {
-  const { accountNumber, amount, transactionReference, currency = "ZAR" } = req.body;
+const makePayment = async (req, res) => {
+  try {
+    const { accountNumber, amount, transactionReference, currency = "ZAR" } = req.body;
 
-  // Validate required fields
-  const validation = validatePaymentFields(accountNumber, amount, transactionReference, currency);
-  if (!validation.isValid) {
-    return respond(res, 400, validation.message, 'AP-002');
-  }
-
-  // Check rate limit: If requests exceed limit, deny further requests
-  if (rateLimit.remaining <= 0) {
-    return respond(res, 429, 'Rate limit exceeded. Please try again later.', 'AP-003', {}, { resetTime: rateLimit.resetTime });
-  }
-
-  // Process payment
-  const paymentResult = processPayment(accountNumber, amount, currency);
-
-  // If payment fails (insufficient balance or invalid account)
-  if (!paymentResult) {
-    return respond(res, 400, 'Payment failed. Insufficient balance or invalid account.', 'AP-002');
-  }
-
-  // Mark the transaction as used
-  usedTransactionReferences.add(transactionReference);
-
-  // Get updated account details
-  const updatedAccount = getAccountDetails(accountNumber);
-
-  // Update rate limit info (example of decrement)
-  rateLimit.remaining -= 1;
-
-  // Respond with success
-  respond(res, 200, 'Payment successful', 'AP-001', {
-    transaction: {
-      accountNumber: paymentResult.accountNumber,
-      transactionReference: transactionReference,
-      amount,
-      currency,
-      newBalance: paymentResult.newBalance,
-      transactionTime: new Date().toISOString()
-    },
-    accountHolder: {
-      name: updatedAccount.name,
-      surname: updatedAccount.surname
+    // Validate required fields
+    const validation = validatePaymentFields(accountNumber, amount, transactionReference, currency);
+    if (!validation.isValid) {
+      return respond(res, 400, validation.message, 'AP-002');
     }
-  }, { rateLimit });
+
+    // Check rate limit: If requests exceed limit, deny further requests
+    if (rateLimit.remaining <= 0) {
+      return respond(res, 429, 'Rate limit exceeded. Please try again later.', 'AP-003', {}, { resetTime: rateLimit.resetTime });
+    }
+
+    // Process payment
+    const paymentResult = await processPayment(accountNumber, amount, currency); // Assuming this is an async function
+
+    // If payment fails (insufficient balance or invalid account)
+    if (!paymentResult) {
+      return respond(res, 400, 'Payment failed. Insufficient balance or invalid account.', 'AP-002');
+    }
+
+    // Mark the transaction as used
+    usedTransactionReferences.add(transactionReference);
+
+    // Get updated account details
+    const updatedAccount = await getAccountDetails(accountNumber);
+
+    // Update rate limit info (example of decrement)
+    rateLimit.remaining -= 1;
+
+    // Respond with success
+    respond(res, 200, 'Payment successful', 'AP-001', {
+      transaction: {
+        accountNumber: paymentResult.accountNumber,
+        transactionReference: transactionReference,
+        amount,
+        currency,
+        newBalance: paymentResult.newBalance,
+        transactionTime: new Date().toISOString()
+      },
+      accountHolder: {
+        name: updatedAccount.name,
+        surname: updatedAccount.surname
+      }
+    }, { rateLimit });
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    return respond(res, 500, 'Internal server error', 'AP-003');
+  }
+};
+
+module.exports = {
+  viewAccountDetails,
+  makePayment
 };
