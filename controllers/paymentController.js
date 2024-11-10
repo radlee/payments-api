@@ -1,4 +1,3 @@
-// controllers/paymentController.js
 const { getAccountDetails, processPayment } = require('../models/accounts');
 
 const usedTransactionReferences = new Set(); // Set to store unique transaction references
@@ -9,6 +8,28 @@ const rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours
  */
 const respond = (res, status, message, statusCode, data = {}, meta = {}) => {
   res.status(status).json({ status: status === 200 ? "success" : "error", message, statusCode, data, meta });
+};
+
+/**
+ * Helper function to validate required fields
+ */
+const validatePaymentFields = (accountNumber, amount, transactionReference, currency) => {
+  if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
+    return { isValid: false, message: 'Account number is required and must be a valid string.' };
+  }
+  if (!transactionReference || typeof transactionReference !== 'string' || transactionReference.trim() === '') {
+    return { isValid: false, message: 'Transaction reference is required and must be a valid string.' };
+  }
+  if (usedTransactionReferences.has(transactionReference)) {
+    return { isValid: false, message: 'Transaction reference has already been used.' };
+  }
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return { isValid: false, message: 'Valid amount is required and must be greater than 0.' };
+  }
+  if (!currency || typeof currency !== 'string' || currency.trim() === '') {
+    return { isValid: false, message: 'Currency is required and must be a valid string.' };
+  }
+  return { isValid: true };
 };
 
 /**
@@ -129,29 +150,10 @@ const viewAccountDetails = (req, res) => {
 const makePayment = (req, res) => {
   const { accountNumber, amount, transactionReference, currency = "ZAR" } = req.body;
 
-  // Check if accountNumber is provided
-  if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
-    return respond(res, 400, 'Account number is required and must be a valid string.', 'AP-002');
-  }
-
-  // Check if transaction reference is provided
-  if (!transactionReference || typeof transactionReference !== 'string' || transactionReference.trim() === '') {
-    return respond(res, 400, 'Transaction reference is required and must be a valid string.', 'AP-002');
-  }
-
-  // Check if the transaction reference has already been used
-  if (usedTransactionReferences.has(transactionReference)) {
-    return respond(res, 400, 'Transaction reference has already been used.', 'AP-002');
-  }
-
-  // Check if amount is provided, is a valid number, and is greater than 0
-  if (!amount || isNaN(amount) || amount <= 0) {
-    return respond(res, 400, 'Valid amount is required and must be greater than 0.', 'AP-002');
-  }
-
-  // Check if currency is provided and is a valid string (optional, defaults to ZAR)
-  if (!currency || typeof currency !== 'string' || currency.trim() === '') {
-    return respond(res, 400, 'Currency is required and must be a valid string.', 'AP-002');
+  // Validate required fields
+  const validation = validatePaymentFields(accountNumber, amount, transactionReference, currency);
+  if (!validation.isValid) {
+    return respond(res, 400, validation.message, 'AP-002');
   }
 
   // Check rate limit: If requests exceed limit, deny further requests
