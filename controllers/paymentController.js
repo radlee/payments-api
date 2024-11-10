@@ -129,9 +129,14 @@ const viewAccountDetails = (req, res) => {
 const makePayment = (req, res) => {
   const { accountNumber, amount, transactionReference, currency = "ZAR" } = req.body;
 
+  // Check if accountNumber is provided
+  if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
+    return respond(res, 400, 'Account number is required and must be a valid string.', 'AP-002');
+  }
+
   // Check if transaction reference is provided
-  if (!transactionReference) {
-    return respond(res, 400, 'Transaction reference is required.', 'AP-002');
+  if (!transactionReference || typeof transactionReference !== 'string' || transactionReference.trim() === '') {
+    return respond(res, 400, 'Transaction reference is required and must be a valid string.', 'AP-002');
   }
 
   // Check if the transaction reference has already been used
@@ -139,9 +144,14 @@ const makePayment = (req, res) => {
     return respond(res, 400, 'Transaction reference has already been used.', 'AP-002');
   }
 
-  // Check if the amount is provided and is a valid number
+  // Check if amount is provided, is a valid number, and is greater than 0
   if (!amount || isNaN(amount) || amount <= 0) {
-    return respond(res, 400, 'Valid amount is required.', 'AP-002');
+    return respond(res, 400, 'Valid amount is required and must be greater than 0.', 'AP-002');
+  }
+
+  // Check if currency is provided and is a valid string (optional, defaults to ZAR)
+  if (!currency || typeof currency !== 'string' || currency.trim() === '') {
+    return respond(res, 400, 'Currency is required and must be a valid string.', 'AP-002');
   }
 
   // Check rate limit: If requests exceed limit, deny further requests
@@ -182,5 +192,3 @@ const makePayment = (req, res) => {
     }
   }, { rateLimit });
 };
-
-module.exports = { viewAccountDetails, makePayment };
