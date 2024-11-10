@@ -139,6 +139,11 @@ const makePayment = (req, res) => {
     return respond(res, 400, 'Transaction reference has already been used.', 'AP-002');
   }
 
+  // Check if the amount is provided and is a valid number
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return respond(res, 400, 'Valid amount is required.', 'AP-002');
+  }
+
   // Check rate limit: If requests exceed limit, deny further requests
   if (rateLimit.remaining <= 0) {
     return respond(res, 429, 'Rate limit exceeded. Please try again later.', 'AP-003', {}, { resetTime: rateLimit.resetTime });
