@@ -1,8 +1,8 @@
 // models/accounts.js
 const accounts = [
-  { accountNumber: '123456', balance: 5000, name: 'John', surname: 'Doe' },
+  { accountNumber: '123456', balance: 5000, name: 'Troy ', surname: 'Carlo' },
   { accountNumber: '654321', balance: 10000, name: 'Jane', surname: 'Smith' },
-  { accountNumber: '987654', balance: 10000, name: 'Fatso', surname: 'Lenister' },
+  { accountNumber: '987654', balance: 10000, name: 'Masizole', surname: 'Skunana' },
   { accountNumber: '111222', balance: 7500, name: 'Alex', surname: 'Brown' },
   { accountNumber: '333444', balance: 12000, name: 'Maria', surname: 'Lopez' }
 ];
