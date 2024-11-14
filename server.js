@@ -41,7 +41,7 @@ const swaggerOptions = {
         },
         security: [
             {
-                bearerAuth: [],
+                bearerAuth: [], // This applies to all endpoints requiring token
             },
         ],
     },
@@ -68,17 +68,28 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Auth route for generating tokens (for testing)
+// Auth route for generating tokens using client credentials (for testing)
 app.post('/auth', (req, res) => {
-    const { userId } = req.body;
+  const { grant_type, client_id, client_secret } = req.body;
 
-    // Check if userId is valid
-    if (!isValidUser(userId)) {
-        return res.status(401).json({ message: 'Invalid userId' });
-    }
+  // Check if grant_type, client_id, and client_secret are provided
+  if (!grant_type || !client_id || !client_secret) {
+      return res.status(400).json({ message: "grant_type, client_id, and client_secret are required" });
+  }
 
-    const token = generateToken(userId);
-    res.json({ token });
+  // Validate grant_type
+  if (grant_type !== 'client_credentials') {
+      return res.status(400).json({ message: "Invalid grant_type" });
+  }
+
+  // Validate client credentials
+  if (!isValidUser(client_id, client_secret)) {
+      return res.status(401).json({ message: 'Invalid client credentials' });
+  }
+
+  // Generate JWT token
+  const token = generateToken(client_id, client_secret);
+  res.json({ token });
 });
 
 // Error Handling Middleware
@@ -117,11 +128,12 @@ app.get('/', (req, res) => {
         <p>Below are the main endpoints in the correct usage order:</p>
     
         <h3 class="endpoint-title">1. Authentication</h3>
-        <p>Generate a JWT token for secure API access by providing a valid user ID.</p>
+        <p>Generate a JWT token for secure API access by providing valid client credentials.</p>
         <pre class="code-block">POST /auth</pre>
         <p><strong>Request Body:</strong></p>
         <pre class="code-block">{
-    "userId": "user123"
+    "client_id": "client123",
+    "client_secret": "secret123"
   }</pre>
         <p><strong>Response:</strong></p>
         <pre class="code-block">{
@@ -142,115 +154,38 @@ app.get('/', (req, res) => {
       "accountNumber": "12345678",
       "balance": 5000,
       "name": "John",
-      "surname": "Doe",
-      "currency": "ZAR"
-    },
-    "meta": {
-      "rateLimit": {
-        "limit": 1000,
-        "remaining": 999,
-        "resetTime": 1731189600000
-      }
+      "surname": "Doe"
     }
   }</pre>
-        <p><strong>Error Responses:</strong></p>
-        <pre class="code-block">{
-    "status": "error",
-    "message": "Account not found",
-    "statusCode": "AC-002",
-    "data": {},
-    "meta": {}
-  }</pre>
-        <p><strong>Error Code: AC-002</strong> - Account not found</p>
     
-        <h3 class="endpoint-title">3. Make a Payment</h3>
-        <p>Submit a payment request by sending the required payment details. Include the JWT token in the Authorization header.</p>
+        <h3 class="endpoint-title">3. Make Payment</h3>
+        <p>Initiate a payment by providing payment details. Use the JWT token in the Authorization header.</p>
         <pre class="code-block">POST /api/pay</pre>
-        <p><strong>Request Body Example:</strong></p>
+        <p><strong>Example Request Body:</strong></p>
         <pre class="code-block">{
-    "amount": 500,
-    "accountNumber": "123456",
-    "transactionReference": "TX123456789"
+    "amount": 100,
+    "accountNumber": "12345678",
+    "paymentMethod": "Credit Card"
   }</pre>
         <p><strong>Example Response:</strong></p>
         <pre class="code-block">{
     "status": "success",
-    "message": "Payment successful",
-    "statusCode": "AP-001",
+    "message": "Payment processed successfully",
+    "statusCode": "PAY-001",
     "data": {
-      "transaction": {
-        "accountNumber": "123456",
-        "transactionReference": "TX123456789",
-        "amount": 500,
-        "currency": "ZAR",
-        "newBalance": 4900,
-        "transactionTime": "2024-11-09T19:03:28.499Z"
-      },
-      "accountHolder": {
-        "name": "Masizole",
-        "surname": "Skunana"
-      }
-    },
-    "meta": {
-      "rateLimit": {
-        "limit": 1000,
-        "remaining": 999,
-        "resetTime": 1731189600000
-      }
+      "transactionReference": "TXN123456",
+      "amount": 100,
+      "paymentMethod": "Credit Card"
     }
   }</pre>
-        <p><strong>Error Responses:</strong></p>
-        <pre class="code-block">{
-    "status": "error",
-    "message": "Transaction reference is required.",
-    "statusCode": "AP-002",
-    "data": {},
-    "meta": {}
-  }</pre>
-        <p><strong>Error Code: AP-002</strong> - Invalid or missing transaction reference</p>
-        <pre class="code-block">{
-    "status": "error",
-    "message": "Transaction reference has already been used.",
-    "statusCode": "AP-002",
-    "data": {},
-    "meta": {}
-  }</pre>
-        <p><strong>Error Code: AP-002</strong> - Transaction reference has already been used</p>
-        <pre class="code-block">{
-    "status": "error",
-    "message": "Payment failed. Insufficient balance or invalid account.",
-    "statusCode": "AP-002",
-    "data": {},
-    "meta": {}
-  }</pre>
-        <p><strong>Error Code: AP-002</strong> - Payment failure (Insufficient balance or invalid account)</p>
-        <pre class="code-block">{
-    "status": "error",
-    "message": "Rate limit exceeded. Please try again later.",
-    "statusCode": "AP-003",
-    "data": {},
-    "meta": {
-      "resetTime": "2024-11-09T00:00:00Z"
-    }
-  }</pre>
-        <p><strong>Error Code: AP-003</strong> - Rate limit exceeded</p>
-    
-        <h2>How to Use the API</h2>
-        <p>To use this API, include the generated JWT token in the Authorization header for all secured endpoints.</p>
-        <pre class="code-block">Authorization: Bearer your_jwt_token_here</pre>
-    
-        <h2>Additional Resources</h2>
-        <p>For more details, visit the full API documentation at <a href="/api-docs">/api-docs</a>.</p>
       </div>
     </body>
-  </html>
-  
-  
+    </html>
     `);
 });
 
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+    console.log(`Server is running on port ${PORT}`);
 });

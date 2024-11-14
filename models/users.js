@@ -1,14 +1,20 @@
 // models/users.js
 const users = [
-  { userId: 'user123', name: 'John Doe' },
-  { userId: 'user456', name: 'Jane Smith' },
-  { userId: 'user789', name: 'Masizole Sukwana' },
-  { userId: 'user321', name: 'Alex Brown' },
-  { userId: 'user654', name: 'Maria Lopez' }
+  { userId: 'user123', name: 'John Doe', client_id: 'client123', client_secret: 'secret123' },
+  { userId: 'user456', name: 'Jane Smith', client_id: 'client456', client_secret: 'secret456' },
+  { userId: 'user789', name: 'Masizole Sukwana', client_id: 'client789', client_secret: 'secret789' },
+  { userId: 'user321', name: 'Alex Brown', client_id: 'client321', client_secret: 'secret321' },
+  { userId: 'user654', name: 'Maria Lopez', client_id: 'client654', client_secret: 'secret654' }
 ];
 
-const isValidUser = (userId) => {
-  return users.some(user => user.userId === userId);
+// Check if the client credentials are valid
+const isValidUser = (client_id, client_secret) => {
+  return users.some(user => user.client_id === client_id && user.client_secret === client_secret);
 };
 
-module.exports = { isValidUser };
+// Find a user by client_id
+const findUserByClientId = (client_id) => {
+  return users.find(user => user.client_id === client_id);
+};
+
+module.exports = { isValidUser, findUserByClientId };
