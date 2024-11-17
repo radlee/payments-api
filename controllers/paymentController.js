@@ -1,13 +1,22 @@
 const { getAccountDetails, processPayment } = require('../models/accounts');
 
-const usedTransactionReferences = new Set(); // Set to store unique transaction references
-const rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours(24, 0, 0, 0) }; // Example rate limit
+// Using a map for a more persistent rate limit reset
+let rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours(24, 0, 0, 0) };
+
+// Transaction references map for better performance (can be moved to DB for persistence)
+const usedTransactionReferences = new Set();
 
 /**
  * Helper function to respond with a standardized structure
  */
 const respond = (res, status, message, statusCode, data = {}, meta = {}) => {
-  res.status(status).json({ status: status === 200 ? "success" : "error", message, statusCode, data, meta });
+  res.status(status).json({
+    status: status === 200 ? "success" : "error",
+    message,
+    statusCode,
+    data,
+    meta,
+  });
 };
 
 /**
@@ -76,7 +85,7 @@ const validatePaymentFields = (accountNumber, amount, transactionReference, curr
 const viewAccountDetails = async (req, res) => {
   try {
     const accountNumber = req.params.accountNumber;
-    const account = await getAccountDetails(accountNumber); // Assuming this is an async function
+    const account = await getAccountDetails(accountNumber);
 
     if (!account) {
       return respond(res, 404, 'Account not found', 'AC-002');
@@ -87,7 +96,7 @@ const viewAccountDetails = async (req, res) => {
       balance: account.balance,
       name: account.name,
       surname: account.surname,
-      currency: "ZAR"
+      currency: "ZAR",
     }, { rateLimit });
   } catch (error) {
     console.error('Error retrieving account details:', error);
@@ -168,7 +177,7 @@ const makePayment = async (req, res) => {
     }
 
     // Process payment
-    const paymentResult = await processPayment(accountNumber, amount, currency); // Assuming this is an async function
+    const paymentResult = await processPayment(accountNumber, amount, currency);
 
     // If payment fails (insufficient balance or invalid account)
     if (!paymentResult) {
@@ -181,7 +190,7 @@ const makePayment = async (req, res) => {
     // Get updated account details
     const updatedAccount = await getAccountDetails(accountNumber);
 
-    // Update rate limit info (example of decrement)
+    // Update rate limit info (decrement remaining)
     rateLimit.remaining -= 1;
 
     // Respond with success
@@ -192,12 +201,12 @@ const makePayment = async (req, res) => {
         amount,
         currency,
         newBalance: paymentResult.newBalance,
-        transactionTime: new Date().toISOString()
+        transactionTime: new Date().toISOString(),
       },
       accountHolder: {
         name: updatedAccount.name,
-        surname: updatedAccount.surname
-      }
+        surname: updatedAccount.surname,
+      },
     }, { rateLimit });
   } catch (error) {
     console.error('Error processing payment:', error);
@@ -205,7 +214,12 @@ const makePayment = async (req, res) => {
   }
 };
 
+// Rate limit reset every 24 hours
+setInterval(() => {
+  rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours(24, 0, 0, 0) };
+}, 24 * 60 * 60 * 1000); // Reset every 24 hours
+
 module.exports = {
   viewAccountDetails,
-  makePayment
+  makePayment,
 };
