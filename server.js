@@ -88,7 +88,6 @@ app.use(
   })
 );
 
-
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -105,11 +104,9 @@ app.post("/auth", (req, res) => {
 
   // Check if grant_type, client_id, and client_secret are provided
   if (!grant_type || !client_id || !client_secret) {
-    return res
-      .status(400)
-      .json({
-        message: "grant_type, client_id, and client_secret are required",
-      });
+    return res.status(400).json({
+      message: "grant_type, client_id, and client_secret are required",
+    });
   }
 
   // Validate grant_type
