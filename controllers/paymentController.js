@@ -43,6 +43,15 @@ const validatePaymentFields = (accountNumber, amount, transactionReference, curr
 
 /**
  * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   security:
+ *     - bearerAuth: []  # Default auth for all endpoints requiring authentication
+ * 
  * /api/account/{accountNumber}:
  *   get:
  *     summary: View account details
