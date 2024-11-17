@@ -72,6 +72,14 @@ app.use(
       }
     `,
     customCssUrl: CSS_URL,
+    customJs: `
+      window.onload = function() {
+        const securityPanel = document.querySelector(".auth-section");
+        if (securityPanel) {
+          securityPanel.style.display = "block";
+        }
+      }
+    `,
   })
 );
 
