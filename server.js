@@ -60,30 +60,9 @@ app.use(swaggerRoot, express.static(path.join(__dirname, "swagger-static")));
 
 // Swagger UI setup
 app.use(
-  "/api-docs",
+  "/swagger",
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocs, {
-    customCss: `
-        body {
-            direction: ltr !important;
-            text-align: left !important;
-        }
-        .swagger-ui .topbar {
-            background-color: #4CAF50; /* Custom top bar color */
-        }
-        .swagger-ui .scheme-container {
-            display: none; /* Hide the scheme selector */
-        }
-        .swagger-ui .info { 
-            color: #333; 
-        }
-        .swagger-ui .opblock-tag.no-desc span {
-            color: #4CAF50; /* Custom color for tags */
-        }
-        .swagger-ui .response-col_description {
-            background-color: #f4f4f4; /* Light gray background for response */
-        }
-    `,
     customCssUrl: CSS_URL,
   })
 );
