@@ -1,7 +1,11 @@
-const { getAccountDetails, processPayment } = require('../models/accounts');
+const { getAccountDetails, processPayment } = require("../models/accounts");
 
 // Using a map for a more persistent rate limit reset
-let rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours(24, 0, 0, 0) };
+let rateLimit = {
+  limit: 1000,
+  remaining: 1000,
+  resetTime: new Date().setHours(24, 0, 0, 0),
+};
 
 // Transaction references map for better performance (can be moved to DB for persistence)
 const usedTransactionReferences = new Set();
@@ -22,21 +26,49 @@ const respond = (res, status, message, statusCode, data = {}, meta = {}) => {
 /**
  * Helper function to validate required fields
  */
-const validatePaymentFields = (accountNumber, amount, transactionReference, currency) => {
-  if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim() === '') {
-    return { isValid: false, message: 'Account number is required and must be a valid string.' };
+const validatePaymentFields = (
+  accountNumber,
+  amount,
+  transactionReference,
+  currency
+) => {
+  if (
+    !accountNumber ||
+    typeof accountNumber !== "string" ||
+    accountNumber.trim() === ""
+  ) {
+    return {
+      isValid: false,
+      message: "Account number is required and must be a valid string.",
+    };
   }
-  if (!transactionReference || typeof transactionReference !== 'string' || transactionReference.trim() === '') {
-    return { isValid: false, message: 'Transaction reference is required and must be a valid string.' };
+  if (
+    !transactionReference ||
+    typeof transactionReference !== "string" ||
+    transactionReference.trim() === ""
+  ) {
+    return {
+      isValid: false,
+      message: "Transaction reference is required and must be a valid string.",
+    };
   }
   if (usedTransactionReferences.has(transactionReference)) {
-    return { isValid: false, message: 'Transaction reference has already been used.' };
+    return {
+      isValid: false,
+      message: "Transaction reference has already been used.",
+    };
   }
   if (!amount || isNaN(amount) || amount <= 0) {
-    return { isValid: false, message: 'Valid amount is required and must be greater than 0.' };
+    return {
+      isValid: false,
+      message: "Valid amount is required and must be greater than 0.",
+    };
   }
-  if (!currency || typeof currency !== 'string' || currency.trim() === '') {
-    return { isValid: false, message: 'Currency is required and must be a valid string.' };
+  if (!currency || typeof currency !== "string" || currency.trim() === "") {
+    return {
+      isValid: false,
+      message: "Currency is required and must be a valid string.",
+    };
   }
   return { isValid: true };
 };
@@ -45,19 +77,60 @@ const validatePaymentFields = (accountNumber, amount, transactionReference, curr
  * @swagger
  * components:
  *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     clientCredentials:
+ *       type: oauth2
+ *       flow: clientCredentials
+ *       tokenUrl: /api/auth
+ *       scopes:
+ *         read: Grants read access
+ *         write: Grants write access
  *   security:
- *     - bearerAuth: []  # Default auth for all endpoints requiring authentication
- * 
+ *     - clientCredentials: []  # Default auth for all endpoints requiring authentication
+ *
+ * /api/auth:
+ *   post:
+ *     summary: Authenticate and get a token
+ *     description: Use client credentials to obtain a JWT token for subsequent requests.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               grant_type:
+ *                 type: string
+ *                 example: client_credentials
+ *               client_id:
+ *                 type: string
+ *                 example: YOUR_CLIENT_ID
+ *               client_secret:
+ *                 type: string
+ *                 example: YOUR_CLIENT_SECRET
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 access_token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 token_type:
+ *                   type: string
+ *                   example: "bearer"
+ *                 expires_in:
+ *                   type: integer
+ *                   example: 3600
+ *       400:
+ *         description: Invalid request or missing credentials
+ *
  * /api/account/{accountNumber}:
  *   get:
  *     summary: View account details
  *     description: Retrieves account details for the specified account number.
- *     security:
- *       - bearerAuth: []  # Require authentication for this endpoint
  *     parameters:
  *       - in: path
  *         name: accountNumber
@@ -90,37 +163,11 @@ const validatePaymentFields = (accountNumber, amount, transactionReference, curr
  *                   example: "ZAR"
  *       404:
  *         description: Account not found
- */
-const viewAccountDetails = async (req, res) => {
-  try {
-    const accountNumber = req.params.accountNumber;
-    const account = await getAccountDetails(accountNumber);
-
-    if (!account) {
-      return respond(res, 404, 'Account not found', 'AC-002');
-    }
-
-    respond(res, 200, 'Account details retrieved successfully', 'AC-001', {
-      accountNumber: account.accountNumber,
-      balance: account.balance,
-      name: account.name,
-      surname: account.surname,
-      currency: "ZAR",
-    }, { rateLimit });
-  } catch (error) {
-    console.error('Error retrieving account details:', error);
-    return respond(res, 500, 'Internal server error', 'AC-003');
-  }
-};
-
-/**
- * @swagger
+ *
  * /api/pay:
  *   post:
  *     summary: Make a payment
  *     description: Processes a payment for the specified account number.
- *     security:
- *       - bearerAuth: []  # Require authentication for this endpoint
  *     requestBody:
  *       required: true
  *       content:
@@ -170,19 +217,66 @@ const viewAccountDetails = async (req, res) => {
  *       400:
  *         description: Payment failed or invalid transaction reference
  */
+
+const viewAccountDetails = async (req, res) => {
+  try {
+    const accountNumber = req.params.accountNumber;
+    const account = await getAccountDetails(accountNumber);
+
+    if (!account) {
+      return respond(res, 404, "Account not found", "AC-002");
+    }
+
+    respond(
+      res,
+      200,
+      "Account details retrieved successfully",
+      "AC-001",
+      {
+        accountNumber: account.accountNumber,
+        balance: account.balance,
+        name: account.name,
+        surname: account.surname,
+        currency: "ZAR",
+      },
+      { rateLimit }
+    );
+  } catch (error) {
+    console.error("Error retrieving account details:", error);
+    return respond(res, 500, "Internal server error", "AC-003");
+  }
+};
+
 const makePayment = async (req, res) => {
   try {
-    const { accountNumber, amount, transactionReference, currency = "ZAR" } = req.body;
+    const {
+      accountNumber,
+      amount,
+      transactionReference,
+      currency = "ZAR",
+    } = req.body;
 
     // Validate required fields
-    const validation = validatePaymentFields(accountNumber, amount, transactionReference, currency);
+    const validation = validatePaymentFields(
+      accountNumber,
+      amount,
+      transactionReference,
+      currency
+    );
     if (!validation.isValid) {
-      return respond(res, 400, validation.message, 'AP-002');
+      return respond(res, 400, validation.message, "AP-002");
     }
 
     // Check rate limit: If requests exceed limit, deny further requests
     if (rateLimit.remaining <= 0) {
-      return respond(res, 429, 'Rate limit exceeded. Please try again later.', 'AP-003', {}, { resetTime: rateLimit.resetTime });
+      return respond(
+        res,
+        429,
+        "Rate limit exceeded. Please try again later.",
+        "AP-003",
+        {},
+        { resetTime: rateLimit.resetTime }
+      );
     }
 
     // Process payment
@@ -190,7 +284,12 @@ const makePayment = async (req, res) => {
 
     // If payment fails (insufficient balance or invalid account)
     if (!paymentResult) {
-      return respond(res, 400, 'Payment failed. Insufficient balance or invalid account.', 'AP-002');
+      return respond(
+        res,
+        400,
+        "Payment failed. Insufficient balance or invalid account.",
+        "AP-002"
+      );
     }
 
     // Mark the transaction as used
@@ -203,30 +302,32 @@ const makePayment = async (req, res) => {
     rateLimit.remaining -= 1;
 
     // Respond with success
-    respond(res, 200, 'Payment successful', 'AP-001', {
-      transaction: {
-        accountNumber: paymentResult.accountNumber,
-        transactionReference: transactionReference,
-        amount,
-        currency,
-        newBalance: paymentResult.newBalance,
-        transactionTime: new Date().toISOString(),
+    respond(
+      res,
+      200,
+      "Payment successful",
+      "AP-001",
+      {
+        transaction: {
+          accountNumber: paymentResult.accountNumber,
+          transactionReference: transactionReference,
+          amount,
+          currency,
+          newBalance: paymentResult.newBalance,
+          transactionTime: new Date().toISOString(),
+        },
+        accountHolder: {
+          name: updatedAccount.name,
+          surname: updatedAccount.surname,
+        },
       },
-      accountHolder: {
-        name: updatedAccount.name,
-        surname: updatedAccount.surname,
-      },
-    }, { rateLimit });
+      { rateLimit }
+    );
   } catch (error) {
-    console.error('Error processing payment:', error);
-    return respond(res, 500, 'Internal server error', 'AP-003');
+    console.error("Error processing payment:", error);
+    respond(res, 500, "Internal server error", "AP-004");
   }
 };
-
-// Rate limit reset every 24 hours
-setInterval(() => {
-  rateLimit = { limit: 1000, remaining: 1000, resetTime: new Date().setHours(24, 0, 0, 0) };
-}, 24 * 60 * 60 * 1000); // Reset every 24 hours
 
 module.exports = {
   viewAccountDetails,
