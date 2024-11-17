@@ -1,9 +1,14 @@
 window.onload = function() {
   //<editor-fold desc="Changeable Configuration Block">
 
-  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+  // Determine the environment
+  const isProduction = window.location.hostname !== 'localhost';
+
+  // Configure the Swagger UI URL based on the environment
+  const swaggerUrl = isProduction ? 'https://payments-api-beta.vercel.app/swagger.json' : 'http://localhost:3000/swagger.json';
+
   window.ui = SwaggerUIBundle({
-    url:  "http://localhost:3000/swagger.json",
+    url:  swaggerUrl,  // Use the appropriate URL based on the environment
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [
