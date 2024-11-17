@@ -1,0 +1,231 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Payment Service API",
+      "version": "1.0.0",
+      "description": "API for managing payments and account details.",
+      "contact": {
+        "name": "Lolito",
+        "email": "hello@flash.co.za"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://payments-api-beta.vercel.app"
+      },
+      {
+        "url": "http://localhost:3000"
+      }
+    ],
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ],
+    "paths": {
+      "/api/account/{accountNumber}": {
+        "get": {
+          "summary": "View account details",
+          "description": "Retrieves account details for the specified account number.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "accountNumber",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "The account number to retrieve details for."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Account details retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "accountNumber": {
+                        "type": "string",
+                        "example": "12345"
+                      },
+                      "balance": {
+                        "type": "number",
+                        "example": 5000
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "John"
+                      },
+                      "surname": {
+                        "type": "string",
+                        "example": "Doe"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "example": "ZAR"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Account not found"
+            }
+          }
+        }
+      },
+      "/api/pay": {
+        "post": {
+          "summary": "Make a payment",
+          "description": "Processes a payment for the specified account number.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountNumber": {
+                      "type": "string",
+                      "description": "The account number for the payment."
+                    },
+                    "amount": {
+                      "type": "number",
+                      "description": "The amount to be paid."
+                    },
+                    "transactionReference": {
+                      "type": "string",
+                      "description": "A unique transaction reference."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "The currency of the payment.",
+                      "example": "ZAR"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Payment successful",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Payment successful"
+                      },
+                      "accountNumber": {
+                        "type": "string",
+                        "example": "12345"
+                      },
+                      "newBalance": {
+                        "type": "number",
+                        "example": 900
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "John"
+                      },
+                      "surname": {
+                        "type": "string",
+                        "example": "Doe"
+                      },
+                      "transactionReference": {
+                        "type": "string",
+                        "example": "TX123456789"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Payment failed or invalid transaction reference"
+            }
+          }
+        }
+      },
+      "/auth": {
+        "post": {
+          "summary": "Generate JWT token",
+          "description": "Generates a JWT token for secure API access by providing valid client credentials.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "grant_type": {
+                      "type": "string",
+                      "example": "client_credentials"
+                    },
+                    "client_id": {
+                      "type": "string",
+                      "example": "client123"
+                    },
+                    "client_secret": {
+                      "type": "string",
+                      "example": "secret123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Token generated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "example": "your_jwt_token_here"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Missing or invalid parameters"
+            },
+            "401": {
+              "description": "Invalid client credentials"
+            }
+          }
+        }
+      }
+    }
+  }
+  
