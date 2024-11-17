@@ -56,11 +56,11 @@ const CSS_URL =
 
 // Serve static Swagger files
 const swaggerRoot = process.env.NODE_ENV === "development" ? "/" : "/swagger";
-app.use(swaggerRoot, express.static(path.join(__dirname, "swagger-static")));
+app.use(swaggerRoot, express.static(path.join(__dirname, "swagger-static/swagger.json")));
 
 // Swagger UI setup
 app.use(
-  "/swagger",
+  "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocs, {
     customCssUrl: CSS_URL,
