@@ -58,9 +58,7 @@ const swaggerRoot = process.env.NODE_ENV === 'development' ? '/' : '/swagger';
 app.use(swaggerRoot, express.static(path.join(__dirname, 'swagger-static')));
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-    customCssUrl: CSS_URL,
-}));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Rate limiting
 const limiter = rateLimit({
