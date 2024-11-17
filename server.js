@@ -9,6 +9,8 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
 
+const swaggerUiAssetPath = require("swagger-ui-dist").getAbsoluteFSPath()
+
 dotenv.config();
 const app = express();
 app.use(express.json());
