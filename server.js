@@ -1,15 +1,15 @@
 // server.js
-const express = require('express');
-const dotenv = require('dotenv');
-const apiRoutes = require('./routes/api');
-const { generateToken } = require('./config/auth');
-const { isValidUser } = require('./models/users');
-const rateLimit = require('express-rate-limit');
-const swaggerJsDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const path = require('path');
+const express = require("express");
+const dotenv = require("dotenv");
+const apiRoutes = require("./routes/api");
+const { generateToken } = require("./config/auth");
+const { isValidUser } = require("./models/users");
+const rateLimit = require("express-rate-limit");
+const swaggerJsDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+const path = require("path");
 
-const swaggerUiAssetPath = require("swagger-ui-dist").getAbsoluteFSPath()
+const swaggerUiAssetPath = require("swagger-ui-dist").getAbsoluteFSPath();
 
 dotenv.config();
 const app = express();
@@ -17,74 +17,93 @@ app.use(express.json());
 
 // Swagger setup
 const swaggerOptions = {
-    swaggerDefinition: {
-        openapi: "3.0.0",
-        info: {
-            title: "Payment Service API",
-            version: "1.0.0",
-            description: "API for managing payments and account details.",
-            contact: {
-                name: "Lolito",
-                email: "hello@flash.co.za",
-            },
-        },
-        servers: [
-            { url: "https://payments-api-beta.vercel.app" },  // Production URL
-            { url: "http://localhost:3000" }                   // Localhost URL
-        ],
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: "http",
-                    scheme: "bearer",
-                    bearerFormat: "JWT",
-                },
-            },
-        },
-        security: [
-            {
-                bearerAuth: [], // This applies to all endpoints requiring token
-            },
-        ],
+  swaggerDefinition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Payment Service API",
+      version: "1.0.0",
+      description: "API for managing payments and account details.",
+      contact: {
+        name: "Lolito",
+        email: "hello@flash.co.za",
+      },
     },
-    apis: ['./controllers/paymentController.js', './server.js'],
+    servers: [
+      { url: "https://payments-api-beta.vercel.app" }, // Production URL
+      { url: "http://localhost:3000" }, // Localhost URL
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [], // This applies to all endpoints requiring token
+      },
+    ],
+  },
+  apis: ["./controllers/paymentController.js", "./server.js"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
-const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
+const CSS_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 
 // Serve static Swagger files
-const swaggerRoot = process.env.NODE_ENV === 'development' ? '/' : '/swagger';
-app.use(swaggerRoot, express.static(path.join(__dirname, 'swagger-static')));
+const swaggerRoot = process.env.NODE_ENV === "development" ? "/" : "/swagger";
+app.use(swaggerRoot, express.static(path.join(__dirname, "swagger-static")));
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs, {
+    customCss: `
+        body {
+            direction: ltr;
+            text-align: left;
+        }
+    `,
+    customCssUrl: CSS_URL,
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: { message: "Too many requests from this IP, please try again later" },
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    message: "Too many requests from this IP, please try again later",
+  },
 });
 app.use(limiter);
 
 // Auth route for generating tokens using client credentials (for testing)
-app.post('/auth', (req, res) => {
+app.post("/auth", (req, res) => {
   const { grant_type, client_id, client_secret } = req.body;
 
   // Check if grant_type, client_id, and client_secret are provided
   if (!grant_type || !client_id || !client_secret) {
-      return res.status(400).json({ message: "grant_type, client_id, and client_secret are required" });
+    return res
+      .status(400)
+      .json({
+        message: "grant_type, client_id, and client_secret are required",
+      });
   }
 
   // Validate grant_type
-  if (grant_type !== 'client_credentials') {
-      return res.status(400).json({ message: "Invalid grant_type" });
+  if (grant_type !== "client_credentials") {
+    return res.status(400).json({ message: "Invalid grant_type" });
   }
 
   // Validate client credentials
   if (!isValidUser(client_id, client_secret)) {
-      return res.status(401).json({ message: 'Invalid client credentials' });
+    return res.status(401).json({ message: "Invalid client credentials" });
   }
 
   // Generate JWT token
@@ -94,18 +113,21 @@ app.post('/auth', (req, res) => {
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
-    });
+  console.error(err.stack);
+  res.status(500).json({
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : err.message,
+  });
 });
 
 // API Routes
-app.use('/api', apiRoutes);
+app.use("/api", apiRoutes);
 
 // Welcoming route with extended documentation
-app.get('/', (req, res) => {
-    res.send(`
+app.get("/", (req, res) => {
+  res.send(`
     <html>
     <head>
       <title>Welcome to the Payment Service API</title>
@@ -187,5 +209,5 @@ app.get('/', (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
