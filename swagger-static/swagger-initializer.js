@@ -5,7 +5,7 @@ window.onload = function() {
   const isProduction = window.location.hostname !== 'localhost';
 
   // Configure the Swagger UI URL based on the environment
-  const swaggerUrl = isProduction ? 'https://payments-api-beta.vercel.app/swagger.json' : 'http://localhost:3000/swagger.json';
+  const swaggerUrl = isProduction ? 'https://payments-api-beta.vercel.app/static/swagger.json' : 'http://localhost:3000/swagger.json';
 
   window.ui = SwaggerUIBundle({
     url:  swaggerUrl,  // Use the appropriate URL based on the environment
